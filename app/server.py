@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,8 +12,8 @@ from model import predict_award_probability
 
 ROOT = Path(__file__).resolve().parent
 STATIC_ROOT = ROOT / "static"
-HOST = "127.0.0.1"
-PORT = 8000
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "8000"))
 
 
 class AppHandler(BaseHTTPRequestHandler):

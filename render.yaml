@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ss-prediction-assistant
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: python app/server.py
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PYTHON_VERSION
+        value: 3.11.9
