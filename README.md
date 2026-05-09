@@ -86,6 +86,61 @@ The app combines:
 
 The claimant-level adjustments are heuristic because the public SSA files are aggregate files. They should be replaced with coefficients learned from validated case-level data before the app is used for real operational decisions.
 
+## Technical Model Details
+
+This project does not currently train a supervised person-level classifier such as logistic regression, random forest, gradient boosting, or a neural network. The available SSA files are aggregate workload tables, so the trained model is an empirical rate model with hierarchical smoothing and deterministic adjustment layers.
+
+The annual state/location model estimates the adult favorable determination probability as a weighted blend:
+
+```text
+predicted_state_rate =
+  0.75 * historical_state_rate
+  + 0.15 * historical_region_rate
+  + 0.10 * national_rate
+```
+
+The rates are weighted by determination volume:
+
+```text
+rate = favorable_adult_determinations / all_adult_determinations
+```
+
+The app then converts the trained aggregate baseline into log-odds and applies transparent claimant-level log-odds adjustments:
+
+```text
+score = logit(trained_location_baseline)
+  + age_adjustment
+  + condition_category_adjustment
+  + duration_adjustment
+  + education_adjustment
+  + work_level_adjustment
+  + evidence_adjustment
+  + recent_work_adjustment
+
+overall_probability = logistic(score)
+```
+
+The stage model estimates where an award may occur using aggregate stage-specific rates:
+
+```text
+P(initial award) = initial_ssdi_allowances / initial_ssdi_determinations
+P(recon award | initial denial) = recon_ssdi_allowances / recon_ssdi_determinations
+P(ALJ fully favorable | hearing path) = fully_favorable / total_alj_decisions
+P(ALJ partially favorable | hearing path) = partially_favorable / total_alj_decisions
+```
+
+The raw stage probabilities are scaled so the award-level probabilities sum to the overall award probability. The remaining probability is assigned to `Not awarded through hearing`.
+
+Decision-time estimates are trained separately:
+
+```text
+initial_months = closing_pending_initial_ssdi / monthly_initial_ssdi_determinations
+reconsideration_months = closing_pending_recon_ssdi / monthly_recon_ssdi_determinations
+alj_months = weighted_average_hearing_office_processing_days / 30.4375
+```
+
+ALJ processing time is weighted by office dispositions.
+
 ## Current Metrics
 
 Current trained artifact:
@@ -105,6 +160,10 @@ Current trained artifact:
 | Holdout MAE | 0.032177 |
 
 The holdout MAE is calculated by training state/region/national aggregate baselines on pre-2024 annual workload data, predicting 2024 adult favorable determination rates by state, and comparing those predictions to observed 2024 rates. It measures aggregate location-baseline error, not person-level classification accuracy.
+
+Interpreted as accuracy for the available aggregate target, the current holdout mean absolute error is about 3.22 percentage points. For example, if a state's observed 2024 adult favorable determination rate were 35.0%, a typical absolute error at this level would be roughly 3.22 percentage points, not 3.22% relative error.
+
+Classification metrics such as accuracy, precision, recall, ROC AUC, and F1 are not reported because the training data does not contain individual approved/denied claimant records. Those metrics require person-level labels.
 
 Current stage baselines:
 
