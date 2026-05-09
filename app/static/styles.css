@@ -37,19 +37,6 @@ body {
   padding: 34px 0 44px;
 }
 
-.brand-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 22px;
-  min-height: 38px;
-}
-
-.brand-logo {
-  display: block;
-  width: 126px;
-  height: auto;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
