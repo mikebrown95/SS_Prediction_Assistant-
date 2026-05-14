@@ -62,6 +62,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 "awardLevels": prediction.award_levels,
                 "predictedAwardLevel": prediction.predicted_award_level,
                 "predictedOutcome": prediction.predicted_outcome,
+                "ruleFindings": prediction.rule_findings,
             }
         )
 

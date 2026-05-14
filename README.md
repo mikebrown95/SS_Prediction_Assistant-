@@ -60,6 +60,12 @@ The current artifact was trained from four SSA public aggregate files:
 
 The source files are aggregate operational statistics. They are not individual claimant records. They do not contain claimant diagnosis details, education, vocational history, earnings, functional capacity, attorney representation, application date, exact onset date, or case-level final outcomes.
 
+The app also incorporates the SSA rules summary PDF in `data\SSA Rules.pdf`:
+
+| File | Publication | Rules incorporated |
+| --- | --- | --- |
+| `SSA Rules.pdf` | SSA Publication No. 05-10029, Disability Benefits, February 2025 | 5-step disability evaluation summary, 12-month/death duration screen, substantial gainful activity screen, recent work test, duration of work test |
+
 ## Model Notes
 
 The model is a transparent aggregate-baseline estimator, not a black-box machine-learning classifier.
@@ -82,6 +88,7 @@ The app combines:
 - Stage-specific award probabilities from monthly Initial SSDI and Reconsideration SSDI data.
 - ALJ fully favorable, partially favorable, denial, and total award rates from ALJ disposition data.
 - Decision timing estimates from monthly state workload data and hearing-office processing-time data.
+- SSA rule screens from Publication No. 05-10029 and current SSA SGA thresholds.
 - Transparent claimant-level adjustments for age, education, condition category, expected impairment duration, work level, specialist evidence, recent work attempt, and location.
 
 The claimant-level adjustments are heuristic because the public SSA files are aggregate files. They should be replaced with coefficients learned from validated case-level data before the app is used for real operational decisions.
@@ -141,6 +148,18 @@ alj_months = weighted_average_hearing_office_processing_days / 30.4375
 
 ALJ processing time is weighted by office dispositions.
 
+The rules layer is deterministic. It does not train from the PDF. It applies SSA rule screens before presenting the final estimate:
+
+```text
+2026 non-blind SGA screen = $1,690/month
+2026 blind SGA screen = $2,830/month
+duration screen = expected impairment duration >= 12 months or expected death
+recent work screen = age-based recent work requirement from SSA publication
+duration of work screen = age-based total work duration estimate from SSA publication
+```
+
+If a core rule screen appears not to be met, the app caps the final probability. This is intentionally conservative and is shown in the `SSA rule screens` result section.
+
 ## Current Metrics
 
 Current trained artifact:
@@ -193,6 +212,7 @@ Key limitations:
 - State/location baseline: trained from SSA aggregate adult favorable determination rates.
 - Award level probabilities: trained from aggregate Initial SSDI, Reconsideration SSDI, and ALJ fully/partially favorable disposition rates.
 - Decision timing: initial and reconsideration estimates use recent monthly closing pending divided by monthly determinations. ALJ timing uses the hearing-office average processing-time file, weighted by dispositions.
+- SSA rules PDF: incorporated as deterministic screens, not as statistical training data.
 - Demographics, education, condition, duration, work level, and evidence fields: transparent adjustment factors until person-level training data is available.
 - Output: an estimate of favorable disability determination probability, not guaranteed SSDI award probability.
 

@@ -132,6 +132,11 @@
             </label>
 
             <label>
+              Current average monthly earnings
+              <input name="monthlyEarnings" type="number" min="0" max="100000" value="0" required>
+            </label>
+
+            <label>
               Prior work level
               <select name="workLevel">
                 <option value="none">No recent work</option>
@@ -144,6 +149,14 @@
           </div>
 
           <div class="checks">
+            <label class="check">
+              <input name="isBlind" type="checkbox">
+              Statutorily blind
+            </label>
+            <label class="check">
+              <input name="expectedToResultInDeath" type="checkbox">
+              Condition is expected to result in death
+            </label>
             <label class="check">
               <input name="hasSpecialistEvidence" type="checkbox" checked>
               Specialist medical evidence available
@@ -170,6 +183,10 @@
           <div>
             <h2>Key factors</h2>
             <ul id="factors" class="factors"></ul>
+          </div>
+          <div>
+            <h2>SSA rule screens</h2>
+            <ul id="rule-findings" class="rules"></ul>
           </div>
           <div>
             <h2>Award level</h2>

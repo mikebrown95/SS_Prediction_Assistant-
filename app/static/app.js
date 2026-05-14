@@ -4,6 +4,7 @@ const probability = document.querySelector("#probability");
 const band = document.querySelector("#band");
 const meterFill = document.querySelector("#meter-fill");
 const factors = document.querySelector("#factors");
+const ruleFindings = document.querySelector("#rule-findings");
 const predictedLevel = document.querySelector("#predicted-level");
 const awardLevels = document.querySelector("#award-levels");
 
@@ -21,7 +22,10 @@ form.addEventListener("submit", async (event) => {
     condition: data.condition,
     impairmentMonths: Number(data.impairmentMonths),
     yearsWorked: Number(data.yearsWorked),
+    monthlyEarnings: Number(data.monthlyEarnings),
     workLevel: data.workLevel,
+    isBlind: Boolean(data.isBlind),
+    expectedToResultInDeath: Boolean(data.expectedToResultInDeath),
     hasSpecialistEvidence: Boolean(data.hasSpecialistEvidence),
     hasRecentWorkAttempt: Boolean(data.hasRecentWorkAttempt),
   };
@@ -62,6 +66,19 @@ function renderResult(result) {
       <span class="impact ${escapeHtml(factor.impact)}">${escapeHtml(factor.impact)}</span>
     `;
     factors.appendChild(item);
+  }
+
+  ruleFindings.innerHTML = "";
+  for (const finding of result.ruleFindings) {
+    const item = document.createElement("li");
+    item.innerHTML = `
+      <span>
+        <span class="factor-label">${escapeHtml(finding.rule)}</span>
+        <span class="factor-detail">${escapeHtml(finding.detail)}</span>
+      </span>
+      <span class="impact ${escapeHtml(finding.status)}">${escapeHtml(finding.status)}</span>
+    `;
+    ruleFindings.appendChild(item);
   }
 
   awardLevels.innerHTML = "";

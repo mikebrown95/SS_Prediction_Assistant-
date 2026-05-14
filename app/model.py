@@ -6,6 +6,7 @@ from math import exp, log
 from typing import Any
 
 try:
+    from .ssa_rules import assess_ssdi_rules
     from .trained_baseline import (
         STATE_TO_SSA_REGION,
         app_region_for_state,
@@ -14,6 +15,7 @@ try:
         estimate_stage_timing,
     )
 except ImportError:
+    from ssa_rules import assess_ssdi_rules
     from trained_baseline import (
         STATE_TO_SSA_REGION,
         app_region_for_state,
@@ -76,12 +78,14 @@ class Prediction:
     award_levels: list[dict[str, str | float]]
     predicted_award_level: str
     predicted_outcome: str
+    rule_findings: list[dict[str, str]]
 
 
 def predict_award_probability(payload: dict[str, Any]) -> Prediction:
     claimant = _parse_payload(payload)
     score = _score_claimant(claimant)
-    probability = _logistic(score)
+    rules = assess_ssdi_rules(claimant)
+    probability = _apply_rule_cap(_logistic(score), rules.probability_cap)
     award_levels = _award_level_probabilities(claimant, probability)
 
     return Prediction(
@@ -92,6 +96,10 @@ def predict_award_probability(payload: dict[str, Any]) -> Prediction:
         award_levels=award_levels,
         predicted_award_level=_predicted_award_level(award_levels),
         predicted_outcome=_predicted_outcome(award_levels),
+        rule_findings=[
+            {"rule": finding.rule, "status": finding.status, "detail": finding.detail}
+            for finding in rules.findings
+        ],
     )
 
 
@@ -130,6 +138,15 @@ def _parse_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "sex": _choice(payload.get("sex"), "sex", SEX_WEIGHTS),
         "yearsWorked": years_worked,
         "impairmentMonths": impairment_months,
+        "monthlyEarnings": _optional_number(
+            payload.get("monthlyEarnings"),
+            "monthlyEarnings",
+            minimum=0,
+            maximum=100000,
+            default=0,
+        ),
+        "isBlind": bool(payload.get("isBlind")),
+        "expectedToResultInDeath": bool(payload.get("expectedToResultInDeath")),
         "hasSpecialistEvidence": bool(payload.get("hasSpecialistEvidence")),
         "hasRecentWorkAttempt": bool(payload.get("hasRecentWorkAttempt")),
         "dateOfDisability": _optional_date(payload.get("dateOfDisability"), "dateOfDisability"),
@@ -355,6 +372,12 @@ def _predicted_award_level(levels: list[dict[str, str | float]]) -> str:
 
 def _predicted_outcome(levels: list[dict[str, str | float]]) -> str:
     return str(max(levels, key=lambda level: float(level["probability"]))["label"])
+
+
+def _apply_rule_cap(probability: float, cap: float | None) -> float:
+    if cap is None:
+        return probability
+    return min(probability, cap)
 
 
 def _estimated_decision_date(disability_date: date | None, months: float) -> str:

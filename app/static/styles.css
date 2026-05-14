@@ -215,6 +215,7 @@ button:focus-visible {
 }
 
 .factors,
+.rules,
 .levels {
   display: grid;
   gap: 10px;
@@ -224,6 +225,7 @@ button:focus-visible {
 }
 
 .factors li,
+.rules li,
 .levels li {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -280,6 +282,16 @@ button:focus-visible {
 .impact.neutral {
   color: #26495f;
   background: var(--cool);
+}
+
+.impact.pass {
+  color: var(--success);
+  background: #b6d991;
+}
+
+.impact.risk {
+  color: #7a3d00;
+  background: var(--action-soft);
 }
 
 @media (max-width: 860px) {

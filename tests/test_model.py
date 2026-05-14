@@ -30,6 +30,7 @@ class PredictionModelTests(unittest.TestCase):
         self.assertTrue(prediction.predicted_award_level)
         self.assertIn("estimatedMonthsFromDisability", prediction.award_levels[0])
         self.assertIn("estimatedDecisionDate", prediction.award_levels[0])
+        self.assertGreaterEqual(len(prediction.rule_findings), 4)
 
     def test_legacy_severity_still_affects_probability(self):
         lower = dict(VALID_PAYLOAD, conditionSeverity=3)
@@ -66,6 +67,29 @@ class PredictionModelTests(unittest.TestCase):
     def test_invalid_disability_date_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "dateOfDisability must use YYYY-MM-DD"):
             predict_award_probability(dict(VALID_PAYLOAD, dateOfDisability="01/01/2025"))
+
+    def test_sga_rule_caps_probability(self):
+        prediction = predict_award_probability(dict(VALID_PAYLOAD, monthlyEarnings=5000))
+
+        self.assertLessEqual(prediction.probability, 0.15)
+        self.assertTrue(
+            any(
+                finding["rule"] == "Substantial gainful activity"
+                and finding["status"] == "risk"
+                for finding in prediction.rule_findings
+            )
+        )
+
+    def test_duration_rule_caps_probability(self):
+        prediction = predict_award_probability(dict(VALID_PAYLOAD, impairmentMonths=6))
+
+        self.assertLessEqual(prediction.probability, 0.25)
+        self.assertTrue(
+            any(
+                finding["rule"] == "Duration requirement" and finding["status"] == "risk"
+                for finding in prediction.rule_findings
+            )
+        )
 
 
 if __name__ == "__main__":
